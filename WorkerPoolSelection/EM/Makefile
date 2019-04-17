@@ -5,9 +5,9 @@ clean:
 
 # Set these variables to the point to the correct locations
 
-#CBLAS_LIB=~/usr/local/lib
-#GSL_LIB=~opt/local/include/
-GSL_INCLUDE=/opt/local/include/
+CBLAS_LIB=/usr/local/lib
+GSL_LIB=/usr/local/lib
+GSL_INCLUDE=/usr/local/include/
 
 #MATLAB=/projects/matlab7
 
@@ -22,4 +22,4 @@ GSL_INCLUDE=/opt/local/include/
 #	 $(MATLAB)/bin/mex -I $(GSL_INCLUDE) em_mex.c em.c data.c prob_functions.c -lgsl -lgslcblas -lm
 
 em: em.c data.c data.h prob_functions.c prob_functions.h verif.h
-	gcc -O3 -I $(GSL_INCLUDE) -L/opt/local/lib -std=c99 -o em em.c data.c prob_functions.c verif.c -lm -lgsl -lgslcblas
+	gcc -O3 -I $(GSL_INCLUDE) -L/usr/local/lib -std=c99 -o em em.c data.c prob_functions.c verif.c -lm -lgsl -lgslcblas

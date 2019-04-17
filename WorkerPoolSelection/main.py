@@ -13,6 +13,7 @@ if __name__ == "__main__":
     arg_numProblems = int(sys.argv[2])
     arg_isLiveInt = int(sys.argv[3])
     arg_isLiveExperiment = bool(arg_isLiveInt)
+    arg_numStates = int(sys.argv[4])
 
     #Number of Tasks
     numberOfProblems = arg_numProblems
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     #Typical value is 2, where the worker pools correspond to unstarred, and starred.
     workerPools = int(f.readline().rstrip())
 
-    #value of a correct answer
+    #value of a incorrect answer
     VALUE = int(f.readline().rstrip())
     #Payout per HIT, for 1each worker pool.
     PRICE = [float(x) for x in f.readline().rstrip().split(",")]
@@ -56,11 +57,11 @@ if __name__ == "__main__":
     #Must be an absolute path to where ZMDP is
     #ZMDPPATH = '/Users/shreyarajpal/Desktop/MausamOld/AgentHuntUpdatedReleaseLiveExperiments/ModelLearning/zmdp-1.1.7/bin/darwin14/zmdp'
     #ZMDPPATH = '/Users/pmaglione/zmdp-1.1.7/bin/darwin18/zmdp'
-    ZMDPPATH = '/Users/pmaglione/Repos/WorkerPoolSelection/ModelLearning/zmdp-1.1.7/bin/darwin18/zmdp'
+    ZMDPPATH = '/Users/pmaglione/Repos/adaptive-pomdp-solutions/WorkerPoolSelection/ModelLearning/zmdp-1.1.7/bin/darwin18/zmdp'
 
     #Must be absolute path to where EM is
     #EMPATH = '/Users/shreyarajpal/Desktop/MausamOld/AgentHuntUpdatedReleaseLiveExperiments/EM/em'
-    EMPATH = '/Users/pmaglione/Repos/WorkerPoolSelection/EM/em'
+    EMPATH = '/Users/pmaglione/Repos/adaptive-pomdp-solutions/WorkerPoolSelection/EM/em'
 
     #Address of your web server
     URL = "http://<yourserverhere>/AgentHuntRelease1.0/client/client.php"
@@ -80,7 +81,7 @@ if __name__ == "__main__":
     #End Configuration
     ############################################
 
-    numStates = 23 #(11 * 11 * 2 + 1 for terminal state)
+    numStates = arg_numStates #(11 * 11 * 2 + 1 for terminal state)
     if arg_isLiveExperiment:
         #mt = RealMT(numberOfProblems, AWSAKID, AWSSAK, sandbox = SANDBOX)
         mt = ""

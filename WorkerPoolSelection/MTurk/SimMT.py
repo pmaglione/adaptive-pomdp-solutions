@@ -47,14 +47,14 @@ class SimMT(MT):
         poolNumber = int(HITId[0].split("W")[1])
         problemNumber = int(HITId[1])
 
-        while True:
+        while True: # stops when can assign
                 if len(self.answers[problemNumber][poolNumber]) > 1:
                     nextAssignment = self.answers[problemNumber][poolNumber].pop(0)
                 else:
                     print("WARNING: ONE VOTE LEFT FOR PROB %d" % problemNumber)
                     nextAssignment = self.answers[problemNumber][poolNumber][0]
                 if self.getWorker(nextAssignment) in self.usedWorkers[problemNumber] and len(self.answers[problemNumber][poolNumber]) > 1:
-                    continue
+                    continue  # if worker already vote on task and remaining workers > 1
                 else:
                     assignments.append(nextAssignment)
                     break

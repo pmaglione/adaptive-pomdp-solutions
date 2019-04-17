@@ -2,6 +2,8 @@ import subprocess
 import os
 from numpy import average
 from time import sleep
+
+
 class Ballots:
 
 
@@ -9,7 +11,7 @@ class Ballots:
     def __init__(self, emp, numberOfWorkerPools, gammaList):
         self.EMPATH = emp
         #Ballots received from each worker pool
-        self.ballots = [[] for i in range(numberOfWorkerPools)]
+        self.ballots = [[] for i in range(numberOfWorkerPools)]  # [[]] for 1 worker pool
         self.numQuestions = 0
         self.numWorkers = 0
         self.numLabels = 0
@@ -26,20 +28,24 @@ class Ballots:
 
     def writeToEMFormat(self):
         outputfile = open('log/em/ballots.eminput', 'w')
-        outputfile.write('%d %d %d %d %d %f\n' % (self.numLabels, self.numWorkers, self.numQuestions, 1, self.numPools, 0.5))
+        outputfile.write('%d %d %d %d %d %f\n' % (self.numLabels, self.numWorkers, self.numQuestions, 1, self.numPools,
+                                                  0.5))
         for i in range(self.numPools):
             for problem,j in zip(self.ballots[i],range(self.numQuestions)):
-                for vote,workerId in problem:
+                for vote, workerId in problem:
+                    outputfile.write('%d %d %d %d %d %f\n' % (j, self.workersToIntegers[workerId], 0, i, vote, 0.5))
+                    '''
                     if (self.problemsToAnswers[j] == 0):
+                        # task id, worker id, WORKFLOW_ID=0, pool_id, vote, prior_z1
                         outputfile.write('%d %d %d %d %d %f\n' % (j,self.workersToIntegers[workerId],0,i,vote,0.5))
                     else:
                         outputfile.write('%d %d %d %d %d %f\n' % (j,self.workersToIntegers[workerId],0,i,vote,0.5))
+                    '''
         outputfile.close()
 
     def runEM(self):
         self.writeToEMFormat()
-        #print "I Want to run the EM"
-        os.chdir("/Users/pmaglione/Repos/WorkerPoolSelection/EM")
+        os.chdir("/Users/pmaglione/Repos/adaptive-pomdp-solutions/WorkerPoolSelection/EM")
         EMDone = False
         while not EMDone:
             outputfile = open('../log/em/emresults', 'w')
@@ -51,7 +57,7 @@ class Ballots:
                 if 'Beta' in nextLine:
                     EMDone = True
 
-        os.chdir("/Users/pmaglione/Repos/WorkerPoolSelection")
+        os.chdir("/Users/pmaglione/Repos/adaptive-pomdp-solutions/WorkerPoolSelection")
         #Now we want to format the output to be nice
 
         gammaoutputs = open('log/em/gammas.emresults','w')
@@ -80,22 +86,36 @@ class Ballots:
         diffoutputs.close()
         posterioroutputs.close()
 
+    '''
+    def addVotesAndLearn(self, votes):
+        self.numQuestions = len(votes)
+        for item_id, votes in enumerate(votes):
+            self.ballots[i].append(obs[i])
+            for (vote, workerId) in obs[i]:
+                if workerId not in self.workersToIntegers:
+                    self.workersToIntegers[workerId] = self.numWorkers  # assign worker id
+                    self.integersToWorkers[self.numWorkers] = workerId
+                    self.workersToPools[workerId] = i
+                    self.numWorkers += 1
+            self.numLabels += len(obs[i])
+    '''
+
     #diff is the difficulty of the question
-    def addQuestionAndRelearn(self, obs, answer, diff, fast = True):
-        self.problemsToAnswers[self.numQuestions] = answer
+    def addQuestionAndRelearn(self, obs, answer, diff, fast=True):
+        self.problemsToAnswers[self.numQuestions] = answer  # numQuestions initially 0
         self.numQuestions += 1
 
         for i in range(self.numPools):
             self.ballots[i].append(obs[i])
             for (vote,workerId) in obs[i]:
                 if workerId not in self.workersToIntegers:
-                    self.workersToIntegers[workerId] = self.numWorkers
+                    self.workersToIntegers[workerId] = self.numWorkers  # assign worker id
                     self.integersToWorkers[self.numWorkers] = workerId
                     self.workersToPools[workerId] = i
                     self.numWorkers += 1
             self.numLabels += len(obs[i])
 
-        if not fast:
+        if not fast:  # always false
             self.runEM()
             self.readGammaResults()
         else:
@@ -127,7 +147,6 @@ class Ballots:
     #Each worker belongs to exactly one worker pool. Return the pool, gamma value of
     # the worker.
     def getWorkerGamma(self,workerId):
-        print(self.workersToGammas)
         #Check if the worker belongs to any pool
         for i in range(self.numPools):
             if workerId in self.workersToGammas[i]:
@@ -138,21 +157,19 @@ class Ballots:
 
     def getWorkerGammaGivenPool(self,workerId,poolNumber):
         if workerId in self.workersToGammas[poolNumber]:
-            return self.workersToGammas[poolNumber][workerId]
+            return self.workersToGammas[poolNumber][workerId]  # If we have the worker gamma after EM
         else:
             return self.calcAverageGammas()[poolNumber]
 
 
     def calcAverageGammas(self):
-        print(self.workersToGammas)
         averages = []
-        for i in range(self.numPools):
+        for i in range(self.numPools):  # 1
             gammas = []
-            for _,value in self.workersToGammas[i].items():
+            for _,value in self.workersToGammas[i].items():  # initially 0, for each worker
                 gammas.append(value)
-            if len(gammas) == 0:
-                averages.append(self.defaultGammaList[i])
+            if len(gammas) == 0:  # if there are no estimated error rates
+                averages.append(self.defaultGammaList[i])  # append 1.68
             else:
                 averages.append(average(gammas))
         return tuple(averages)
- 

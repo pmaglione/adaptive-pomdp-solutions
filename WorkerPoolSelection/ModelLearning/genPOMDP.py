@@ -25,6 +25,8 @@ from itertools import product
 def genPOMDP(filename, reward, cost, gammas, numberOfWorkerPools):
     difficulties = getDifficulties(0.1)
     numDiffs = len(difficulties)
+
+    reward_correct_answer = 0
     
     #Add one absorbing state
     numberOfStates = ((numDiffs) * 2) + 1
@@ -61,6 +63,7 @@ def genPOMDP(filename, reward, cost, gammas, numberOfWorkerPools):
                 for k in range(0, numberOfWorkerPools):
                     file.write('O: %d : %d : Zero %f\n' % 
                                (k, state, calcAccuracy(gammas[k], difficulties[diffState])))
+                    # gamma: shape * scale. i.e: gamma(4,0.42) = 1.68
                     file.write('O: %d : %d : One %f\n' % 
                                (k, state, 1.0 - calcAccuracy(gammas[k], difficulties[diffState])))
             else: # if the answer is 1
@@ -76,11 +79,11 @@ def genPOMDP(filename, reward, cost, gammas, numberOfWorkerPools):
 
 
     for i in range(numberOfStates-1):
-        if i < (numberOfStates-1) / 2:
-            file.write('R: %d : %d : %d : * %f\n' % (SUBMITZERO, i, numberOfStates-1, 1))
+        if i < (numberOfStates-1) / 2:  # class=0 section
+            file.write('R: %d : %d : %d : * %f\n' % (SUBMITZERO, i, numberOfStates-1, reward_correct_answer))
             file.write('R: %d : %d : %d : * %f\n' % (SUBMITONE, i, numberOfStates-1, reward))
-        else:
-            file.write('R: %d : %d : %d : * %f\n' % (SUBMITONE, i, numberOfStates-1, 1))
+        else:  # class=1 section
+            file.write('R: %d : %d : %d : * %f\n' % (SUBMITONE, i, numberOfStates-1, reward_correct_answer))
             file.write('R: %d : %d : %d : * %f\n' % (SUBMITZERO, i, numberOfStates-1, reward))
 
     #Add rewards in absorbing state

@@ -76,7 +76,11 @@ if __name__ == "__main__":
 
     for wpool in range(numOfWorkerPools):
         for w in range(numOfWorkersInEachPool[wpool]):
-            gamma = gammavariate(gammaMuPrior[wpool],gammaSigmaPrior[wpool])
+            #gamma = gammavariate(gammaMuPrior[wpool],gammaSigmaPrior[wpool])
+            if w < 50:
+                gamma = normalvariate(gammaMuPrior[wpool], gammaSigmaPrior[wpool])
+            else:
+                gamma = normalvariate(4., 0.5)
             wID += 1
             workerGammas.write(str(wID) + '\t' + str(gamma) + '\n')
             GammaSet[wID] = gamma

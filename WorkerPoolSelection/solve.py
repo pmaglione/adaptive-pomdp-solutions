@@ -35,19 +35,35 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
     #costList = map(lambda x: scaleFactor*x, priceList)
     costList = [scaleFactor * x for x in priceList]
 
+    '''
+    diffs = [[0, 1],  # 5 states
+             [0, 0.33, 0.66, 1],  # 9 states
+             [0, 0.2, 0.4, 0.6, 0.8, 1],  # 13 states
+             [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1]  # 17 states
+             ]
+
     #Initialize array of difficulties
+    #
+    for diff in diffs:
+        if len(diff) == ((numStates - 1) / 2):
+            difficulties = diff
+    '''
+
     difficulties = getDifficulties(0.1)
+
 
     # SINGLE WORKER POOL SETTING
 
-    WORKERPOOLACTIONS = range(numberOfWorkerPools)
-    #SUBMITZERO = numberOfWorkerPools
-    #SUBMITONE = numberOfWorkerPools+1
 
-    BALLOT0 = 0
-    BALLOT1 = 1
-    SUBMITZERO = 2
-    SUBMITONE = 3
+    WORKERPOOLACTIONS = range(numberOfWorkerPools)
+    SUBMITZERO = numberOfWorkerPools
+    SUBMITONE = numberOfWorkerPools+1
+    UNCLASSIFIED = numberOfWorkerPools + 2  # for 1 pool == 3
+
+    # 0 = +vote
+    # 1 = submit zero
+    # 2 = submit one
+    # 3 = submit one
 
     choices = [{'0':0,'1':1} for i in range(0, numberOfProblems)]
     inversechoices = [{0:'0',1:'1'} for i in range(0, numberOfProblems)]
@@ -88,7 +104,7 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
         for j in range(numberOfWorkerPools):
             observations[i].append([])
 
-    gammas = ballots.calcAverageGammas() #Gammas contains number of worker pool averages
+    #gammas = ballots.calcAverageGammas() #Gammas contains number of worker pool averages
 
     print("Reading Policy")
 
@@ -105,7 +121,12 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
     pathForPolicy = fpipe.readline().rstrip()
     fpipe.close()
 
+    numdiffs = int((numStates - 1) / 2)
 
+    #policy = readPolicy(f"ModelLearning/Policies/unclassified.policy", numStates)
+    policy = readPolicy(f"ModelLearning/Policies/W1_COST-500.policy", numStates)
+
+    '''
     try:
         policy = readPolicy(pathForPolicy + "out.policy", numStates)
     except:
@@ -130,6 +151,7 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
 
     print("POMDP Generated, POMDP Solved, Policy read")
     print("Initialization Complete")
+    '''
     
     #Begin the experiment
     iterationNumber = -1
@@ -146,11 +168,7 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
         (nop, statuses, answers, costs, HITIds, usedWorkers, actions, agentActions, beliefs, ballots) = unSerialize()
         #Loop through all the problems regardless of the ones left. Can maintain a set of problems left to speed up
         for i in range(0, numberOfProblems):
-            if debug:
-                print("Starting Problem %d:" % i)
             if statuses[i] == DONE:
-                if debug:
-                    print("Problem %d is done" % i)
                 continue
             elif statuses[i] == READY_FOR_ACTION:
                 beliefState = beliefs[i]
@@ -158,49 +176,25 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
                 bestAction = int(bestAction)
                 agentActions[i] = bestAction
 
-                # Exploration versus exploitation
-                if random() <= 0.1:
-                    if bestAction == BALLOT0:
-                        bestAction = BALLOT1
-                    elif bestAction == BALLOT1:
-                        bestAction = BALLOT0
-                    else:
-                        if random() <= 0.5:
-                            bestAction = BALLOT0
-                        else:
-                            bestAction = BALLOT1
 
-
-                if bestAction == BALLOT0 or bestAction == BALLOT1:
-                    availableQuestions[int(bestAction)].append(i)
-
-                    costs[i] += 1
-                    statuses[i] = WAITING_FOR_TURKER
-
-                '''
                 #Depending on the ballot0/ballot1, push to one or the other workflow
                 if bestAction < numberOfWorkerPools:
-                    if debug:
-                        print("Problem %d requested to Worker Pool %d" % (i, bestAction))
-                        availableQuestions[int(bestAction)].append(i)
+                    availableQuestions[int(bestAction)].append(i)  # add task to collect vote
 
                     costs[i] += costList[bestAction]
                     statuses[i] = WAITING_FOR_TURKER
-                '''
 
                 elif bestAction == SUBMITZERO or bestAction == SUBMITONE:
                     ballots.addQuestionAndRelearn(
-                        observations[i],
-                        bestAction - numberOfWorkerPools,
-                        getMostLikelyDifficulty(beliefs[i], difficulties),
+                        observations[i],  # all obs
+                        bestAction - numberOfWorkerPools,  # 0/1
+                        getMostLikelyDifficulty(beliefs[i], difficulties),  # diff with higher %
                         fastLearning)
 
-                    gammas = ballots.calcAverageGammas()
+                    # RELEARNING APPROACH
                     '''
                     if not fastLearning:
-                        print "Problem %d complete: Relearning." % i
                         #Generate the POMDP
-
                         genPOMDP('log/pomdp/rl.pomdp', value * -1, costList, gammas, numberOfWorkerPools)
                         #Solve the POMDP
                         zmdpDumpfile = open('log/pomdp/zmdpDump', 'w')
@@ -208,7 +202,7 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
                         subprocess.call('%s solve %s -o %s -t %d' % (
                                 ZMDPPATH,
                                 'log/pomdp/rl.pomdp',
-                                'log/pomdp/out.policy',
+                                pathForPolicy + 'out.policy',
                                 timeLearning),
                                         stdout=zmdpDumpfile,
                                         shell=True,
@@ -216,18 +210,13 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
                         zmdpDumpfile.close()
 
                         #Read the policy that we will begin with 
-                        policy = readPolicy("log/pomdp/out.policy", 
+                        policy = readPolicy(pathForPolicy + "out.policy",
                                             numStates)
-                        print policy.keys()
-                        print "POMDP Generated, POMDP Solved, Policy read"
                     '''
+
                     if bestAction == SUBMITZERO:
-                        if debug:
-                            print("Problem %d submitted answer 0" % i)
                         answers[i] = 0
                     else:
-                        if debug:
-                            print("Problem %d submitted answer 1" % i)
                         answers[i] = 1
                     statuses[i] = DONE
             elif statuses[i] == WAITING_FOR_TURKER:
@@ -257,28 +246,24 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
 
         #Now we go through all the hits and get observations
         nextHITIds = []
-        for HITId in HITIds: 
+        for HITId in HITIds:
             hits = mt.getHIT(HITId)
             observation = ''
             for hit in hits: #there really should only be one
                 if hit.HITStatus == 'Reviewable':
-                    print(HITId)
+
                     assignments = mt.getAssignments(HITId, 
                                                     page_size=100,
                                                     page_number=1)
                     for assignment in assignments: #there should only be one
 
-                        print(assignment) #Observation,workerId,AssignmentId,pn)
-
                         observation = mt.getObservation(assignment)
                         pn = mt.getProblemNumber(assignment)
-                        print("THE OBSERVATION")
-                        print(observation)
 
                         if observation in choices[pn]:
-                            observation = choices[pn][observation]
-
+                            observation = choices[pn][observation]  # get vote class
                         else:
+                            raise ValueError(observation)
                             print("Never go here!")
                             inversechoices[pn][choicesindex[pn]] = observation
                             choices[pn][observation] = choicesindex[pn]
@@ -287,13 +272,16 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
                         
                         workerId = mt.getWorker(assignment)
                         mt.approveAssignment(assignment)
+                    #end for
 
-                        if debug:
-                            print("Problem %d received observation %d" % (pn, observation))
-                        #Now that we have an observation, we need to update our belief
-                    beliefs[pn] = updateBelief(beliefs[pn], #agentActions[pn],
+                    #Now that we have an observation, we need to update our belief
+                    beliefs[pn] = updateBelief(beliefs[pn],
                                               observation, difficulties,
-                                              ballots.getWorkerGammaGivenPool(workerId,agentActions[pn]))
+                                              ballots.getWorkerGammaGivenPool(workerId,
+                                                                              agentActions[pn]))
+                    # for 1 pool, pool # always gonna be 0
+
+
 
                     f = open('log/results/observations%dw%d' % (pn,agentActions[pn]),'a+')
                     observations[pn][agentActions[pn]].append((observation,workerId))

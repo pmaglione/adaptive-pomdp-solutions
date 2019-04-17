@@ -1,0 +1,4 @@
+No	No	0
+No	Yes	1
+Yes	No	1
+Yes	Yes	0

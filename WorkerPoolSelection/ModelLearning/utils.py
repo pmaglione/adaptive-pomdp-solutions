@@ -75,7 +75,6 @@ def findBestAction(actions, policy, beliefState):
 
 def findBestValue(action, hyperplanes, beliefs):
     bestValue = -129837198273981231
-    bestHyperplane = []
     for hyperplane in hyperplanes:
         dontUse = False
         for (b, entry) in zip(beliefs, hyperplane):
@@ -86,10 +85,8 @@ def findBestValue(action, hyperplanes, beliefs):
             continue
         value = dot(beliefs, hyperplane)
         if value > bestValue:
-            bestHyperplane = hyperplane
             bestValue = value
-    #print beliefs
-    #print bestHyperplane
+
     return bestValue
 
 
@@ -107,27 +104,19 @@ def getMostLikelyDifficulty(belief, difficulties):
     return bestState
 
 
-def updateBelief(prevBelief  #action
-                 , observation, difficulties, gamma):
+def updateBelief(prevBelief, observation, difficulties, gamma):
     newBeliefs = []
     numDiffs = len(difficulties)
-    for i in range(0, 2):
-        for j in range(0, numDiffs):
-            #for k in range(0, numDiffs):
+    for i in range(0, 2):  # 0,1
+        for j in range(0, numDiffs):  # 11
             diff = difficulties[j]
             state = (i * numDiffs) + j
-            #if action == 0: #BALLOT A
+
             if observation == i:
                 newBeliefs.append(calcAccuracy(gamma, diff) * prevBelief[state])
             else:
                 newBeliefs.append((1 - calcAccuracy(gamma, diff)) * prevBelief[state])
-                #else: #BALLOT B
-                #     if observation == i:
-                #         newBeliefs.append(calcAccuracy(bGamma, diffB) *
-                #                           prevBelief[state])
-                #     else:
-                #         newBeliefs.append((1-calcAccuracy(bGamma, diffB)) *
-                #                           prevBelief[state])
+
     newBeliefs.append(0.0)
     normalize(newBeliefs)
     return newBeliefs

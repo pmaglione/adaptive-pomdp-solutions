@@ -1,16 +1,18 @@
-__author__ = 'kgoel93'
+__author__ = 'pmaglione'
 
 from os import system, mkdir
 from time import sleep
 import shutil
 import sys
 from functools import reduce
+import time
 
 if __name__ == "__main__":
     arg_mode = int(sys.argv[1])
     arg_timeLearning = int(sys.argv[2])
     arg_numItems = int(sys.argv[3])
     arg_balance = float(sys.argv[4])
+    arg_numStates = int(sys.argv[5])
 
     #To run either Live or Simulated experiments.
     LIVEEXPERIMENT = False
@@ -22,7 +24,7 @@ if __name__ == "__main__":
     else:
         RELATIVEPATH = 'Experiments/'
     #How many times to repeat one experiment type.
-    NUMBER_OF_REPETITIONS = 10
+    NUMBER_OF_REPETITIONS = 5
     SCALE = 100 #The value by which Cost must be scaled.
     MODE = arg_mode #Mode 0 to write simulation parameters, Mode 1 to read them and run the experiments
 
@@ -197,7 +199,7 @@ if __name__ == "__main__":
                     fs.write("1\n")
                     fs.write("%d\n" % wrongAnswerCost)
                     fs.write("%f\n" % (1.0/SCALE)) #normal worker cost
-                    fs.write("%f\n" % (WP0_mean*WP0_stddev))
+                    fs.write("%f\n" % WP0_mean)#(WP0_mean*WP0_stddev)  only WP0_mean for normal dist
                     fs.write("%d\n" % SCALE)
                     fs.write("0")
                     fs.close()
@@ -206,7 +208,7 @@ if __name__ == "__main__":
                     fp.write(RELATIVEPATH + "%s/%d/Unstarred/" % (name,wrongAnswerCost))
                     fp.close()
                     sleep(0.1)
-                    system(f"python main.py {arg_timeLearning} {arg_numItems} {LIVEEXPERIMENT_INT} > uselessLog")
+                    system(f"python main.py {arg_timeLearning} {arg_numItems} {LIVEEXPERIMENT_INT} {arg_numStates} > uselessLog")
                     #print("Unstarred Worker Pool Complete")
 
 
@@ -305,6 +307,9 @@ if __name__ == "__main__":
                     fUA.close()
                     fcU.close()
                     faU.close()
+                #end for
+                timestamp = time.time()
+                system(f"mv {RELATIVEPATH}{name} {RELATIVEPATH}{timestamp}-{name}")
 
                 print("Finished pretty printing everything!")
             print("Next experiment (if any) will begin in 10 seconds.")
