@@ -29,7 +29,7 @@ def numberLeft(statuses):
 def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
           nameOfTask, value, priceList, gammaList, scaleFactor,
           ZMDPPATH, URL, EMPATH, fastLearning, timeLearning, 
-          taskDuration, debug = False, isLiveExperiment = False):
+          taskDuration, debug = False, isLiveExperiment = False, expert_cost=20):
 
 
     #costList = map(lambda x: scaleFactor*x, priceList)
@@ -63,7 +63,7 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
     # 0 = +vote
     # 1 = submit zero
     # 2 = submit one
-    # 3 = submit one
+    # 3 = leave unclassified
 
     choices = [{'0':0,'1':1} for i in range(0, numberOfProblems)]
     inversechoices = [{0:'0',1:'1'} for i in range(0, numberOfProblems)]
@@ -78,7 +78,7 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
     costs = [0 for i in range(0, numberOfProblems)]
     HITIds = []
     usedWorkers = [[] for i in range(0, numberOfProblems)] #Should be a set
-    actions = range(0, numberOfWorkerPools+2)
+    actions = range(0, numberOfWorkerPools+3)
     agentActions = [-1 for i in range(0, numberOfProblems)]    
     ballots = Ballots(EMPATH,numberOfWorkerPools,gammaList)  # BALLOTS OBJECT
 
@@ -124,7 +124,7 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
     numdiffs = int((numStates - 1) / 2)
 
     #policy = readPolicy(f"ModelLearning/Policies/unclassified.policy", numStates)
-    policy = readPolicy(f"ModelLearning/Policies/W1_COST-500.policy", numStates)
+    policy = readPolicy(f"ModelLearning/Policies/unclassified.policy", numStates)
 
     '''
     try:
@@ -152,6 +152,12 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
     print("POMDP Generated, POMDP Solved, Policy read")
     print("Initialization Complete")
     '''
+
+    fAns = open('SimulatedData/trueQuestionAnswers.txt', 'r')
+    trueAnswers = [int(line.rstrip().split("\t")[1]) for line in fAns][0:numberOfProblems]
+    fAns.close()
+
+    unclassified_num = 0
     
     #Begin the experiment
     iterationNumber = -1
@@ -184,7 +190,7 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
                     costs[i] += costList[bestAction]
                     statuses[i] = WAITING_FOR_TURKER
 
-                elif bestAction == SUBMITZERO or bestAction == SUBMITONE:
+                elif bestAction == SUBMITZERO or bestAction == SUBMITONE or bestAction == UNCLASSIFIED:
                     ballots.addQuestionAndRelearn(
                         observations[i],  # all obs
                         bestAction - numberOfWorkerPools,  # 0/1
@@ -214,10 +220,16 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
                                             numStates)
                     '''
 
-                    if bestAction == SUBMITZERO:
-                        answers[i] = 0
+                    if bestAction == UNCLASSIFIED:
+                        answers[i] = trueAnswers[i]
+                        costs[i] += expert_cost
+                        unclassified_num += 1
                     else:
-                        answers[i] = 1
+                        if bestAction == SUBMITZERO:
+                            answers[i] = 0
+                        else:
+                            answers[i] = 1
+
                     statuses[i] = DONE
             elif statuses[i] == WAITING_FOR_TURKER:
                 continue
@@ -317,9 +329,9 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
         trueDifficulties = [float(line.rstrip().split(",")[1]) for line in fDiff][0:numberOfProblems]
         fDiff.close()
 
-        fAns = open('SimulatedData/trueQuestionAnswers.txt','r')
-        trueAnswers = [int(line.rstrip().split("\t")[1]) for line in fAns][0:numberOfProblems]
-        fAns.close()
+        #fAns = open('SimulatedData/trueQuestionAnswers.txt','r')
+        #trueAnswers = [int(line.rstrip().split("\t")[1]) for line in fAns][0:numberOfProblems]
+        #fAns.close()
 
         fSim = open('SimulatedData/WorkerPool.info','r')
         linesInSim = [line.rstrip() for line in fSim]
@@ -337,6 +349,8 @@ def solve(mt, numStates, numberOfProblems, numberOfWorkerPools,
         fc = open(path + "costs",'a')
         fa = open(path + "accuracies",'a')
 
+        f.write(f"Expert cost: {expert_cost}")
+        f.write(f"Unclassified Num: {unclassified_num}")
         f.write('Number of Worker Pools: %d\n'% numberOfWorkerPools)
         f.write('Number of Workers in Pool 1: %d\n' %int(linesInSim[1]))
         f.write('Original mean,standardDev for Pool 1: %f,%f\n'%(float(linesInSim[2]),float(linesInSim[3])))

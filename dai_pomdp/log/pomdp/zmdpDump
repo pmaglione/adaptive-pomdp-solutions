@@ -1,0 +1,30 @@
+00000 reading model file and allocating data structures
+00000 calculating initial heuristics
+00000 finished initialization, beginning to improve policy
+00000      1 calls to solver, bounds [-61.6760 ..  -1.0447], regret <= 60.6313
+00010    442 calls to solver, bounds [-30.6192 .. -13.1516], regret <= 17.4675
+00020    467 calls to solver, bounds [-30.5962 .. -17.2909], regret <= 13.3053
+00030    493 calls to solver, bounds [-30.5913 .. -20.8861], regret <= 9.70512
+00040    512 calls to solver, bounds [-30.5910 .. -23.2335], regret <= 7.35752
+00051    529 calls to solver, bounds [-30.5907 .. -24.8217], regret <= 5.769
+00061    540 calls to solver, bounds [-30.5904 .. -25.6814], regret <= 4.90901
+00072    556 calls to solver, bounds [-30.5893 .. -26.4184], regret <= 4.17083
+00083    584 calls to solver, bounds [-30.5853 .. -27.4293], regret <= 3.15607
+00093    608 calls to solver, bounds [-30.5846 .. -28.0649], regret <= 2.51968
+00106    622 calls to solver, bounds [-30.5842 .. -28.3731], regret <= 2.2111
+00118    633 calls to solver, bounds [-30.5841 .. -28.5015], regret <= 2.08255
+00130    660 calls to solver, bounds [-30.5839 .. -28.9223], regret <= 1.66157
+00140    684 calls to solver, bounds [-30.5836 .. -29.1830], regret <= 1.40065
+00151    710 calls to solver, bounds [-30.5836 .. -29.3535], regret <= 1.23007
+00162    733 calls to solver, bounds [-30.5835 .. -29.4534], regret <= 1.13009
+00178    760 calls to solver, bounds [-30.5834 .. -29.6275], regret <= 0.955898
+00189    779 calls to solver, bounds [-30.5834 .. -29.6865], regret <= 0.896885
+00204    788 calls to solver, bounds [-30.5834 .. -29.7387], regret <= 0.84474
+00214    812 calls to solver, bounds [-30.5834 .. -29.8688], regret <= 0.714609
+00225    840 calls to solver, bounds [-30.5834 .. -29.9527], regret <= 0.630723
+00236    875 calls to solver, bounds [-30.5834 .. -30.0600], regret <= 0.523414
+00246    886 calls to solver, bounds [-30.5834 .. -30.0911], regret <= 0.492279
+*** received SIGINT, user pressed control-C ***
+terminating run and writing output policy as soon as the solver returns control
+*** received SIGINT, user pressed control-C ***
+terminating run and writing output policy as soon as the solver returns control

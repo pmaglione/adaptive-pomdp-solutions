@@ -13,6 +13,7 @@ if __name__ == "__main__":
     arg_numItems = int(sys.argv[3])
     arg_balance = float(sys.argv[4])
     arg_numStates = int(sys.argv[5])
+    arg_expertCost = int(sys.argv[6])
 
     #To run either Live or Simulated experiments.
     LIVEEXPERIMENT = False
@@ -208,7 +209,7 @@ if __name__ == "__main__":
                     fp.write(RELATIVEPATH + "%s/%d/Unstarred/" % (name,wrongAnswerCost))
                     fp.close()
                     sleep(0.1)
-                    system(f"python main.py {arg_timeLearning} {arg_numItems} {LIVEEXPERIMENT_INT} {arg_numStates} > uselessLog")
+                    system(f"python main.py {arg_timeLearning} {arg_numItems} {LIVEEXPERIMENT_INT} {arg_numStates} {arg_expertCost} > uselessLog")
                     #print("Unstarred Worker Pool Complete")
 
 
