@@ -22,8 +22,11 @@ from itertools import product
 #Eg. Reward for incorrect answer is -1000.
 ###########################
 
-def genPOMDP(filename, reward, cost, gammas, numberOfWorkerPools):
-    difficulties = getDifficulties(0.1)
+def genPOMDP(filename, reward, cost, gammas, numberOfWorkerPools, difficulties=None):
+
+    if difficulties is None:
+        difficulties = getDifficulties(0.1)
+
     numDiffs = len(difficulties)
 
     reward_correct_answer = 0

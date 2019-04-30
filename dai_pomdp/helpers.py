@@ -65,26 +65,5 @@ def get_results():
     return gammas, difficulties, posteriors
 
 
-def get_worker_error_rate_estimation(items_votes):
-    # min 2 votes per item
-    if all(len(v) >= 2 for k, v in items_votes.items()):
-        workers_to_int = writeToEMFormat(items_votes)
 
-        gammas, difficulties, posteriors = get_results()
-
-        worker_keys = list(workers_to_int.keys())
-        worker_int_keys = list(workers_to_int.values())
-
-        return {worker_keys[worker_int_keys.index(key)]: gamma for key, gamma in enumerate(gammas)}
-    else:
-        return {}
-
-
-def get_worker_error_rate(worker_id, estimated_error_rates, avg_error_rate):
-    if worker_id in estimated_error_rates.keys():
-        return estimated_error_rates[worker_id]
-    elif len(estimated_error_rates) != 0:
-        return sum(estimated_error_rates.values()) / len(estimated_error_rates)  # AVG over known workers
-    else:
-        return avg_error_rate
 
