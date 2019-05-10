@@ -1,0 +1,299 @@
+# This file is a POMDP policy, represented as a set of "lower bound
+# planes", each of which consists of an alpha vector and a corresponding
+# action.  Given a particular belief b, this information can be used to
+# answer two queries of interest:
+#
+#   1. What is a lower bound on the expected long-term reward starting
+#        from belief b?
+#   2. What is an action that achieves that expected reward lower bound?
+#
+# Each lower bound plane is only defined over a subset of the belief
+# simplex--it is defined for those beliefs b such that the non-zero
+# entries of b are a subset of the entries present in the plane's alpha
+# vector.  If this condition holds we say the plane is 'applicable' to b.
+#
+# Given a belief b, both of the queries above can be answered by the
+# following process: first, throw out all the planes that are not
+# applicable to b.  Then, for each of the remaining planes, take the inner
+# product of the plane's alpha vector with b.  The highest inner product
+# value is the expected long-term reward lower bound, and the action label
+# for that plane is the action that achieves the bound.
+
+{
+  policyType => "MaxPlanesLowerBound",
+  numPlanes => 13,
+  planes => [
+    {
+      action => 2,
+      numEntries => 15,
+      entries => [
+        1, -10,
+        2, -10,
+        3, -10,
+        4, -10,
+        5, -10,
+        6, -10,
+        7, -10,
+        8, 0,
+        9, 0,
+        10, 0,
+        11, 0,
+        12, 0,
+        13, 0,
+        14, 0,
+        15, 0
+      ]
+    },
+    {
+      action => 1,
+      numEntries => 17,
+      entries => [
+        0, 0,
+        1, 0,
+        2, 0,
+        3, 0,
+        4, 0,
+        5, 0,
+        6, 0,
+        7, 0,
+        8, -500,
+        9, -500,
+        10, -500,
+        11, -500,
+        12, -500,
+        13, -500,
+        14, -500,
+        15, -500,
+        16, 0
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 14,
+      entries => [
+        1, -1.36487,
+        2, -1.96445,
+        3, -2.73674,
+        4, -3.62734,
+        5, -4.58944,
+        6, -5.58382,
+        7, -6.24874,
+        9, -39.6908,
+        10, -78.4228,
+        11, -118.889,
+        12, -161.404,
+        13, -205.901,
+        14, -251.936,
+        15, -283.087
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 14,
+      entries => [
+        1, -3.0123,
+        2, -4.16946,
+        3, -5.37053,
+        4, -6.53858,
+        5, -7.61774,
+        6, -8.57034,
+        7, -9.12356,
+        9, -3.97651,
+        10, -12.7622,
+        11, -27.7474,
+        12, -49.4164,
+        13, -78.2053,
+        14, -114.36,
+        15, -142.53
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 14,
+      entries => [
+        1, -3.36844,
+        2, -4.62451,
+        3, -5.7681,
+        4, -6.79921,
+        5, -7.71784,
+        6, -8.524,
+        7, -8.99895,
+        9, -3.88693,
+        10, -12.3977,
+        11, -26.5324,
+        12, -46.291,
+        13, -71.6734,
+        14, -102.68,
+        15, -126.475
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 14,
+      entries => [
+        1, -4.86542,
+        2, -6.43029,
+        3, -7.7196,
+        4, -8.75867,
+        5, -9.57279,
+        6, -10.1873,
+        7, -10.4985,
+        9, -1.29149,
+        10, -2.85947,
+        11, -6.9692,
+        12, -14.8859,
+        13, -27.8748,
+        14, -47.2012,
+        15, -64.2312
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 14,
+      entries => [
+        1, -4.53603,
+        2, -6.04354,
+        3, -7.41152,
+        4, -8.57625,
+        5, -9.51023,
+        6, -10.2128,
+        7, -10.5608,
+        9, -1.29821,
+        10, -2.91415,
+        11, -7.24255,
+        12, -15.8234,
+        13, -30.324,
+        14, -52.4567,
+        15, -72.2576
+      ]
+    },
+    {
+      action => 1,
+      numEntries => 15,
+      entries => [
+        0, 0,
+        1, 0,
+        2, 0,
+        3, 0,
+        4, 0,
+        5, 0,
+        6, 0,
+        7, 0,
+        9, -500,
+        10, -500,
+        11, -500,
+        12, -500,
+        13, -500,
+        14, -500,
+        15, -500
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 15,
+      entries => [
+        0, -1,
+        1, -1.74992,
+        2, -2.49985,
+        3, -3.24978,
+        4, -3.9997,
+        5, -4.74962,
+        6, -5.49955,
+        7, -5.9995,
+        9, -38.4963,
+        10, -75.9925,
+        11, -113.489,
+        12, -150.985,
+        13, -188.481,
+        14, -225.977,
+        15, -250.975
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 15,
+      entries => [
+        0, -1.9999,
+        1, -3.36844,
+        2, -4.62451,
+        3, -5.7681,
+        4, -6.79921,
+        5, -7.71784,
+        6, -8.524,
+        7, -8.99895,
+        9, -3.88693,
+        10, -12.3977,
+        11, -26.5324,
+        12, -46.291,
+        13, -71.6734,
+        14, -102.68,
+        15, -126.475
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 15,
+      entries => [
+        0, -2.9997,
+        1, -4.86542,
+        2, -6.43029,
+        3, -7.7196,
+        4, -8.75867,
+        5, -9.57279,
+        6, -10.1873,
+        7, -10.4985,
+        9, -1.29149,
+        10, -2.85947,
+        11, -6.9692,
+        12, -14.8859,
+        13, -27.8748,
+        14, -47.2012,
+        15, -64.2312
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 15,
+      entries => [
+        0, -3.9994,
+        1, -6.24999,
+        2, -7.96505,
+        3, -9.23187,
+        4, -10.1302,
+        5, -10.732,
+        6, -11.102,
+        7, -11.2482,
+        9, -1.09685,
+        10, -1.42888,
+        11, -2.56791,
+        12, -5.46532,
+        13, -11.452,
+        14, -22.2384,
+        15, -33.1124
+      ]
+    },
+    {
+      action => 2,
+      numEntries => 17,
+      entries => [
+        0, -10,
+        1, -10,
+        2, -10,
+        3, -10,
+        4, -10,
+        5, -10,
+        6, -10,
+        7, -10,
+        8, 0,
+        9, 0,
+        10, 0,
+        11, 0,
+        12, 0,
+        13, 0,
+        14, 0,
+        15, 0,
+        16, 0
+      ]
+    }
+  ]
+}

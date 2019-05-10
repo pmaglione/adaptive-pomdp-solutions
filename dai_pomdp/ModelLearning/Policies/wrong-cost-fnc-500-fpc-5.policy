@@ -1,0 +1,192 @@
+# This file is a POMDP policy, represented as a set of "lower bound
+# planes", each of which consists of an alpha vector and a corresponding
+# action.  Given a particular belief b, this information can be used to
+# answer two queries of interest:
+#
+#   1. What is a lower bound on the expected long-term reward starting
+#        from belief b?
+#   2. What is an action that achieves that expected reward lower bound?
+#
+# Each lower bound plane is only defined over a subset of the belief
+# simplex--it is defined for those beliefs b such that the non-zero
+# entries of b are a subset of the entries present in the plane's alpha
+# vector.  If this condition holds we say the plane is 'applicable' to b.
+#
+# Given a belief b, both of the queries above can be answered by the
+# following process: first, throw out all the planes that are not
+# applicable to b.  Then, for each of the remaining planes, take the inner
+# product of the plane's alpha vector with b.  The highest inner product
+# value is the expected long-term reward lower bound, and the action label
+# for that plane is the action that achieves the bound.
+
+{
+  policyType => "MaxPlanesLowerBound",
+  numPlanes => 6,
+  planes => [
+    {
+      action => 1,
+      numEntries => 23,
+      entries => [
+        0, 0,
+        1, 0,
+        2, 0,
+        3, 0,
+        4, 0,
+        5, 0,
+        6, 0,
+        7, 0,
+        8, 0,
+        9, 0,
+        10, 0,
+        11, -500,
+        12, -500,
+        13, -500,
+        14, -500,
+        15, -500,
+        16, -500,
+        17, -500,
+        18, -500,
+        19, -500,
+        20, -500,
+        21, -500,
+        22, 0
+      ]
+    },
+    {
+      action => 1,
+      numEntries => 20,
+      entries => [
+        0, 0,
+        1, 0,
+        2, 0,
+        3, 0,
+        4, 0,
+        5, 0,
+        6, 0,
+        7, 0,
+        8, 0,
+        9, 0,
+        10, 0,
+        13, -500,
+        14, -500,
+        15, -500,
+        16, -500,
+        17, -500,
+        18, -500,
+        19, -500,
+        20, -500,
+        21, -500
+      ]
+    },
+    {
+      action => 1,
+      numEntries => 21,
+      entries => [
+        0, 0,
+        1, 0,
+        2, 0,
+        3, 0,
+        4, 0,
+        5, 0,
+        6, 0,
+        7, 0,
+        8, 0,
+        9, 0,
+        10, 0,
+        12, -500,
+        13, -500,
+        14, -500,
+        15, -500,
+        16, -500,
+        17, -500,
+        18, -500,
+        19, -500,
+        20, -500,
+        21, -500
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 21,
+      entries => [
+        0, -1,
+        1, -1.24998,
+        2, -1.49995,
+        3, -1.74992,
+        4, -1.9999,
+        5, -2.24988,
+        6, -2.49985,
+        7, -2.74982,
+        8, -2.9998,
+        9, -3.24978,
+        10, -3.49975,
+        12, -25.9975,
+        13, -50.995,
+        14, -75.9925,
+        15, -100.99,
+        16, -125.987,
+        17, -150.985,
+        18, -175.983,
+        19, -200.98,
+        20, -225.977,
+        21, -250.975
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 21,
+      entries => [
+        0, -1.9999,
+        1, -2.43733,
+        2, -2.84977,
+        3, -3.23721,
+        4, -3.59966,
+        5, -3.93711,
+        6, -4.24957,
+        7, -4.53703,
+        8, -4.7995,
+        9, -5.03697,
+        10, -5.24945,
+        12, -2.29975,
+        13, -6.09899,
+        14, -12.3977,
+        15, -21.196,
+        16, -32.4937,
+        17, -46.291,
+        18, -62.5877,
+        19, -81.384,
+        20, -102.68,
+        21, -126.475
+      ]
+    },
+    {
+      action => 2,
+      numEntries => 23,
+      entries => [
+        0, -5,
+        1, -5,
+        2, -5,
+        3, -5,
+        4, -5,
+        5, -5,
+        6, -5,
+        7, -5,
+        8, -5,
+        9, -5,
+        10, -5,
+        11, 0,
+        12, 0,
+        13, 0,
+        14, 0,
+        15, 0,
+        16, 0,
+        17, 0,
+        18, 0,
+        19, 0,
+        20, 0,
+        21, 0,
+        22, 0
+      ]
+    }
+  ]
+}

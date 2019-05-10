@@ -1,0 +1,247 @@
+# This file is a POMDP policy, represented as a set of "lower bound
+# planes", each of which consists of an alpha vector and a corresponding
+# action.  Given a particular belief b, this information can be used to
+# answer two queries of interest:
+#
+#   1. What is a lower bound on the expected long-term reward starting
+#        from belief b?
+#   2. What is an action that achieves that expected reward lower bound?
+#
+# Each lower bound plane is only defined over a subset of the belief
+# simplex--it is defined for those beliefs b such that the non-zero
+# entries of b are a subset of the entries present in the plane's alpha
+# vector.  If this condition holds we say the plane is 'applicable' to b.
+#
+# Given a belief b, both of the queries above can be answered by the
+# following process: first, throw out all the planes that are not
+# applicable to b.  Then, for each of the remaining planes, take the inner
+# product of the plane's alpha vector with b.  The highest inner product
+# value is the expected long-term reward lower bound, and the action label
+# for that plane is the action that achieves the bound.
+
+{
+  policyType => "MaxPlanesLowerBound",
+  numPlanes => 13,
+  planes => [
+    {
+      action => 1,
+      numEntries => 11,
+      entries => [
+        0, 0,
+        1, 0,
+        2, 0,
+        3, 0,
+        4, 0,
+        5, 0,
+        7, -10,
+        8, -10,
+        9, -10,
+        10, -10,
+        11, -10
+      ]
+    },
+    {
+      action => 2,
+      numEntries => 13,
+      entries => [
+        0, -500,
+        1, -500,
+        2, -500,
+        3, -500,
+        4, -500,
+        5, -500,
+        6, 0,
+        7, 0,
+        8, 0,
+        9, 0,
+        10, 0,
+        11, 0,
+        12, 0
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 10,
+      entries => [
+        1, -52.4437,
+        2, -105.181,
+        3, -161.404,
+        4, -221.108,
+        5, -283.087,
+        7, -1.54187,
+        8, -2.46363,
+        9, -3.62734,
+        10, -4.91903,
+        11, -6.24874
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 10,
+      entries => [
+        1, -6.24385,
+        2, -22.034,
+        3, -49.4164,
+        4, -89.4344,
+        5, -142.53,
+        7, -3.38744,
+        8, -4.97051,
+        9, -6.53858,
+        10, -7.95072,
+        11, -9.12356
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 10,
+      entries => [
+        1, -6.09899,
+        2, -21.196,
+        3, -46.291,
+        4, -81.384,
+        5, -126.475,
+        7, -3.79963,
+        8, -5.3994,
+        9, -6.79921,
+        10, -7.99906,
+        11, -8.99895
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 10,
+      entries => [
+        1, -1.60984,
+        2, -5.23877,
+        3, -14.8859,
+        4, -33.5503,
+        5, -64.2312,
+        7, -5.41923,
+        8, -7.31889,
+        9, -8.75867,
+        10, -9.79856,
+        11, -10.4985
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 10,
+      entries => [
+        1, -1.62432,
+        2, -5.40636,
+        3, -15.8234,
+        4, -36.7702,
+        5, -72.2576,
+        7, -5.04829,
+        8, -6.97581,
+        9, -8.57625,
+        10, -9.76956,
+        11, -10.5608
+      ]
+    },
+    {
+      action => 2,
+      numEntries => 11,
+      entries => [
+        1, -500,
+        2, -500,
+        3, -500,
+        4, -500,
+        5, -500,
+        6, 0,
+        7, 0,
+        8, 0,
+        9, 0,
+        10, 0,
+        11, 0
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 11,
+      entries => [
+        1, -50.995,
+        2, -100.99,
+        3, -150.985,
+        4, -200.98,
+        5, -250.975,
+        6, -1,
+        7, -1.9999,
+        8, -2.9998,
+        9, -3.9997,
+        10, -4.9996,
+        11, -5.9995
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 11,
+      entries => [
+        1, -6.09899,
+        2, -21.196,
+        3, -46.291,
+        4, -81.384,
+        5, -126.475,
+        6, -1.9999,
+        7, -3.79963,
+        8, -5.3994,
+        9, -6.79921,
+        10, -7.99906,
+        11, -8.99895
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 11,
+      entries => [
+        1, -1.60984,
+        2, -5.23877,
+        3, -14.8859,
+        4, -33.5503,
+        5, -64.2312,
+        6, -2.9997,
+        7, -5.41923,
+        8, -7.31889,
+        9, -8.75867,
+        10, -9.79856,
+        11, -10.4985
+      ]
+    },
+    {
+      action => 0,
+      numEntries => 11,
+      entries => [
+        1, -1.16097,
+        2, -2.04765,
+        3, -5.46532,
+        4, -14.4188,
+        5, -33.1124,
+        6, -3.9994,
+        7, -6.87671,
+        8, -8.85432,
+        9, -10.1302,
+        10, -10.8781,
+        11, -11.2482
+      ]
+    },
+    {
+      action => 1,
+      numEntries => 13,
+      entries => [
+        0, 0,
+        1, 0,
+        2, 0,
+        3, 0,
+        4, 0,
+        5, 0,
+        6, -10,
+        7, -10,
+        8, -10,
+        9, -10,
+        10, -10,
+        11, -10,
+        12, 0
+      ]
+    }
+  ]
+}

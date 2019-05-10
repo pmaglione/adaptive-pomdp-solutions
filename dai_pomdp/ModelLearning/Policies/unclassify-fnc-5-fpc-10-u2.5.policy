@@ -1,0 +1,194 @@
+# This file is a POMDP policy, represented as a set of "lower bound
+# planes", each of which consists of an alpha vector and a corresponding
+# action.  Given a particular belief b, this information can be used to
+# answer two queries of interest:
+#
+#   1. What is a lower bound on the expected long-term reward starting
+#        from belief b?
+#   2. What is an action that achieves that expected reward lower bound?
+#
+# Each lower bound plane is only defined over a subset of the belief
+# simplex--it is defined for those beliefs b such that the non-zero
+# entries of b are a subset of the entries present in the plane's alpha
+# vector.  If this condition holds we say the plane is 'applicable' to b.
+#
+# Given a belief b, both of the queries above can be answered by the
+# following process: first, throw out all the planes that are not
+# applicable to b.  Then, for each of the remaining planes, take the inner
+# product of the plane's alpha vector with b.  The highest inner product
+# value is the expected long-term reward lower bound, and the action label
+# for that plane is the action that achieves the bound.
+
+{
+  policyType => "MaxPlanesLowerBound",
+  numPlanes => 6,
+  planes => [
+    {
+      action => 2,
+      numEntries => 23,
+      entries => [
+        0, -10,
+        1, -10,
+        2, -10,
+        3, -10,
+        4, -10,
+        5, -10,
+        6, -10,
+        7, -10,
+        8, -10,
+        9, -10,
+        10, -10,
+        11, 0,
+        12, 0,
+        13, 0,
+        14, 0,
+        15, 0,
+        16, 0,
+        17, 0,
+        18, 0,
+        19, 0,
+        20, 0,
+        21, 0,
+        22, 0
+      ]
+    },
+    {
+      action => 3,
+      numEntries => 23,
+      entries => [
+        0, -2.5,
+        1, -2.5,
+        2, -2.5,
+        3, -2.5,
+        4, -2.5,
+        5, -2.5,
+        6, -2.5,
+        7, -2.5,
+        8, -2.5,
+        9, -2.5,
+        10, -2.5,
+        11, -2.5,
+        12, -2.5,
+        13, -2.5,
+        14, -2.5,
+        15, -2.5,
+        16, -2.5,
+        17, -2.5,
+        18, -2.5,
+        19, -2.5,
+        20, -2.5,
+        21, -2.5,
+        22, 0
+      ]
+    },
+    {
+      action => 3,
+      numEntries => 20,
+      entries => [
+        1, -2.5,
+        2, -2.5,
+        3, -2.5,
+        4, -2.5,
+        5, -2.5,
+        6, -2.5,
+        7, -2.5,
+        8, -2.5,
+        9, -2.5,
+        10, -2.5,
+        12, -2.5,
+        13, -2.5,
+        14, -2.5,
+        15, -2.5,
+        16, -2.5,
+        17, -2.5,
+        18, -2.5,
+        19, -2.5,
+        20, -2.5,
+        21, -2.5
+      ]
+    },
+    {
+      action => 2,
+      numEntries => 21,
+      entries => [
+        1, -10,
+        2, -10,
+        3, -10,
+        4, -10,
+        5, -10,
+        6, -10,
+        7, -10,
+        8, -10,
+        9, -10,
+        10, -10,
+        11, 0,
+        12, 0,
+        13, 0,
+        14, 0,
+        15, 0,
+        16, 0,
+        17, 0,
+        18, 0,
+        19, 0,
+        20, 0,
+        21, 0
+      ]
+    },
+    {
+      action => 1,
+      numEntries => 21,
+      entries => [
+        0, 0,
+        1, 0,
+        2, 0,
+        3, 0,
+        4, 0,
+        5, 0,
+        6, 0,
+        7, 0,
+        8, 0,
+        9, 0,
+        10, 0,
+        12, -5,
+        13, -5,
+        14, -5,
+        15, -5,
+        16, -5,
+        17, -5,
+        18, -5,
+        19, -5,
+        20, -5,
+        21, -5
+      ]
+    },
+    {
+      action => 1,
+      numEntries => 23,
+      entries => [
+        0, 0,
+        1, 0,
+        2, 0,
+        3, 0,
+        4, 0,
+        5, 0,
+        6, 0,
+        7, 0,
+        8, 0,
+        9, 0,
+        10, 0,
+        11, -5,
+        12, -5,
+        13, -5,
+        14, -5,
+        15, -5,
+        16, -5,
+        17, -5,
+        18, -5,
+        19, -5,
+        20, -5,
+        21, -5,
+        22, 0
+      ]
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+# This file is a POMDP policy, represented as a set of "lower bound
+# planes", each of which consists of an alpha vector and a corresponding
+# action.  Given a particular belief b, this information can be used to
+# answer two queries of interest:
+#
+#   1. What is a lower bound on the expected long-term reward starting
+#        from belief b?
+#   2. What is an action that achieves that expected reward lower bound?
+#
+# Each lower bound plane is only defined over a subset of the belief
+# simplex--it is defined for those beliefs b such that the non-zero
+# entries of b are a subset of the entries present in the plane's alpha
+# vector.  If this condition holds we say the plane is 'applicable' to b.
+#
+# Given a belief b, both of the queries above can be answered by the
+# following process: first, throw out all the planes that are not
+# applicable to b.  Then, for each of the remaining planes, take the inner
+# product of the plane's alpha vector with b.  The highest inner product
+# value is the expected long-term reward lower bound, and the action label
+# for that plane is the action that achieves the bound.
+
+{
+  policyType => "MaxPlanesLowerBound",
+  numPlanes => 2,
+  planes => [
+    {
+      action => 1,
+      numEntries => 23,
+      entries => [
+        0, 0,
+        1, 0,
+        2, 0,
+        3, 0,
+        4, 0,
+        5, 0,
+        6, 0,
+        7, 0,
+        8, 0,
+        9, 0,
+        10, 0,
+        11, -1,
+        12, -1,
+        13, -1,
+        14, -1,
+        15, -1,
+        16, -1,
+        17, -1,
+        18, -1,
+        19, -1,
+        20, -1,
+        21, -1,
+        22, 0
+      ]
+    },
+    {
+      action => 3,
+      numEntries => 23,
+      entries => [
+        0, -0.5,
+        1, -0.5,
+        2, -0.5,
+        3, -0.5,
+        4, -0.5,
+        5, -0.5,
+        6, -0.5,
+        7, -0.5,
+        8, -0.5,
+        9, -0.5,
+        10, -0.5,
+        11, -0.5,
+        12, -0.5,
+        13, -0.5,
+        14, -0.5,
+        15, -0.5,
+        16, -0.5,
+        17, -0.5,
+        18, -0.5,
+        19, -0.5,
+        20, -0.5,
+        21, -0.5,
+        22, 0
+      ]
+    }
+  ]
+}
