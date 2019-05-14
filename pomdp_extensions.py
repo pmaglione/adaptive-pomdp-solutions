@@ -1,7 +1,3 @@
-from dai_pomdp.ModelLearning.utils import *
-from dai_pomdp.Data import *
-from dai_pomdp.Ballots import *
-from dai_pomdp.helpers import *
 import random
 from copy import deepcopy
 import numpy as np
@@ -9,12 +5,78 @@ import algorithms_utils as alg_utils
 import pandas as pd
 from results_utils import *
 
+import python_glad.glad_bin as glad_bin
+
 # ACTIONS
 CONST_NO_ANSWER = -1
 CONST_REQUEST_VOTE = 0
 CONST_SUBMIT_ZERO = 1
 CONST_SUBMIT_ONE = 2
 
+# policy and beliefs management
+def dot(v1, v2):
+    sum = 0.0
+    for i in range(0, len(v1)):
+        if v1[i] == '*' or v2[i] == '*':
+            continue
+        sum += v1[i] * v2[i]
+    return sum
+
+def findBestAction(actions, policy, beliefState):
+    bestValue = -1230981239102938019
+    bestAction = 0  #Assume there is at least one action
+    for action in actions:
+        if action in policy:
+            value = findBestValue(action, policy[action], beliefState)
+            if value > bestValue:
+                bestValue = value
+                bestAction = action
+    return bestAction
+
+
+def findBestValue(action, hyperplanes, beliefs):
+    bestValue = -129837198273981231
+    for hyperplane in hyperplanes:
+        dontUse = False
+        for (b, entry) in zip(beliefs, hyperplane):
+            if b != 0 and entry == '*':
+                dontUse = True
+                break
+        if dontUse:
+            continue
+        value = dot(beliefs, hyperplane)
+        if value > bestValue:
+            bestValue = value
+
+    return bestValue
+
+def normalize(array):
+    sum = 0.0
+    for i in range(0, len(array)):
+        sum += array[i]  # when initialize all in 1, equivalent to 1 * numStates
+    for i in range(0, len(array)):
+        array[i] = array[i] / sum  # when initialize all in 1, equivalent to 1 / numStates
+    return array
+
+def calcAccuracy(gamma, d):
+    return (1.0 / 2) * (1.0 + (1.0 - d) ** gamma)
+
+def updateBelief(prevBelief, observation, difficulties, gamma):
+    newBeliefs = []
+    numDiffs = len(difficulties)
+    for i in range(0, 2):
+        for j in range(0, numDiffs):
+            diff = difficulties[j]
+            state = (i * numDiffs) + j
+
+            if observation == i:
+                newBeliefs.append(calcAccuracy(gamma, diff) * prevBelief[state])
+            else:
+                newBeliefs.append((1 - calcAccuracy(gamma, diff)) * prevBelief[state])
+
+    newBeliefs.append(0.0)
+    normalize(newBeliefs)
+    return newBeliefs
 
 def round_to_3(value):
     return round(value, 3)
@@ -62,21 +124,6 @@ def get_worker_vote(item_id, items_votes, items_difficulties, items_gt, workers_
         return selected_worker_id, 1 - items_gt[item_id]
 
 
-def get_worker_error_rate_estimation(items_votes):
-    # min 2 votes per item
-    if all(len(v) >= 2 for k, v in items_votes.items()):
-        workers_to_int = writeToEMFormat(items_votes)
-
-        gammas, difficulties, posteriors = get_results()
-
-        worker_keys = list(workers_to_int.keys())
-        worker_int_keys = list(workers_to_int.values())
-
-        return {worker_keys[worker_int_keys.index(key)]: gamma for key, gamma in enumerate(gammas)}
-    else:
-        return {}
-
-
 def get_error_rate(worker_id, estimated_error_rates, avg_error_rate):
     if worker_id in estimated_error_rates.keys():
         return estimated_error_rates[worker_id]
@@ -96,6 +143,128 @@ def get_worker_error_rate(worker_id, estimated_error_rates, avg_error_rate, esti
         return get_error_rate(worker_id, estimated_error_rates, avg_error_rate)
 
 
+def get_workers_order(votes):
+    worker_order = 0
+    worker_to_order = {}
+    order_to_worker = {}
+    num_votes = 0
+    num_workers = 0
+    num_items = len(votes)
+
+    for item_id, item_votes in votes.items():
+        for worker_id, vote in item_votes.items():
+            num_votes += 1
+            if worker_id not in worker_to_order.keys():
+                worker_to_order[worker_id] = worker_order
+                order_to_worker[worker_order] = worker_id
+                worker_order += 1
+
+    num_workers = len(worker_to_order)
+
+    return num_items, num_workers, num_votes, worker_to_order, order_to_worker
+
+
+def writeToEMFormat(votes, path_em_input_file):
+    num_items, num_workers, num_votes, worker_to_order, order_to_worker = get_workers_order(votes)
+
+    outputfile = open(path_em_input_file, 'w')
+    prior_beta = 0.5
+    # file headers
+    outputfile.write('%d %d %d %f\n' % (num_votes, num_workers, num_items, prior_beta))
+
+    # votes
+    for item_id, item_votes in votes.items():
+        for worker_id, vote in item_votes.items():
+            outputfile.write('%d %d %d\n' % (item_id, worker_to_order[worker_id], vote))
+
+    outputfile.close()
+
+    return worker_to_order, order_to_worker
+
+
+def get_worker_error_rate_estimation(votes, path_em_input_file):
+    # min 2 votes per item
+    if all(len(v) >= 2 for k, v in votes.items()):
+        worker_to_order, order_to_worker = writeToEMFormat(votes, path_em_input_file)
+
+        error_rates = glad_bin.estimate(path_em_input_file)
+
+        return {order_to_worker[worker_order]: abs(error_rate) for worker_order, error_rate in error_rates.items()}
+    else:
+        return {}
+
+def get_error_rate(worker_id, estimated_error_rates, avg_error_rate):
+    if worker_id in estimated_error_rates.keys():
+        return estimated_error_rates[worker_id]
+    elif len(estimated_error_rates) != 0:
+        return sum(estimated_error_rates.values()) / len(estimated_error_rates)  # AVG over known workers
+    else:
+        return avg_error_rate
+
+def get_worker_error_rate(worker_id, estimated_error_rates, avg_error_rate, estimate_after, have_submitted):
+    if estimate_after:
+        if have_submitted:
+            return get_error_rate(worker_id, estimated_error_rates, avg_error_rate)
+        else:
+            return avg_error_rate
+    else:
+        return get_error_rate(worker_id, estimated_error_rates, avg_error_rate)
+
+# Generate discrete difficulties between 0 and 1 at diffInterval steps
+def getDifficulties(diffInterval):
+    difficulties = []
+    numDiffs = int(1.0 / diffInterval + 1)
+    for i in range(0, numDiffs):
+        difficulties.append(round(diffInterval * i, 1))
+    return difficulties
+
+def readPolicy(policyfile, numStates):
+    try:
+        policy = {}
+        fs = open(policyfile, 'r')
+        lines = fs.read().split("\n")
+
+        numPlanes = 0
+        action = 0
+        alpha = [0 for k in range(0, numStates)]
+        insideEntries = False
+        for i in range(0, len(lines)):
+            line = lines[i]
+            #First we ignore a bunch of lines at the beginning
+            if (line.find('#') != -1 or line.find('{') != -1 or
+                        line.find('policyType') != -1 or line.find('}') != -1 or
+                        line.find('numPlanes') != -1 or
+                    ((line.find(']') != -1) and not insideEntries) or
+                        line.find('planes') != -1 or line == ''):
+                continue
+            if line.find('action') != -1:
+                words = line.strip(', ').split(" => ")
+                action = int(words[1])
+                continue
+            if line.find('numEntries') != -1:
+                continue
+            if line.find('entries') != -1:
+                insideEntries = True
+                continue
+            if (line.find(']') != -1) and insideEntries:  #We are done with one alpha vector
+                if action not in policy:
+                    policy[action] = []
+                policy[action].append(alpha)
+                action = 0
+                alpha = ['*' for k in range(0, numStates)]
+                numPlanes += 1
+                insideEntries = False
+                continue
+            #If we get here, we are reading state value pairs
+            entry = line.split(",")
+            state = int(entry[0])
+            val = float(entry[1])
+            alpha[state] = val
+
+        return policy
+    except:
+        raise FileNotFoundError
+
 # data utils
 '''
     items_num - number of items
@@ -112,7 +281,8 @@ def generate_gold_data(items_num, possitive_percentage):
 
 
 def solve(num_states, states_difficulties, avg_error_rate, policy, workers_error_rates, items_difficulties, items_gt,
-          estimate_after=True):
+          estimate_after=True, path_em_input_file='./log/em/ballots.eminput'):
+
     num_items = len(items_gt)
 
     actions = range(0, 3)  # 0,1,2
@@ -129,14 +299,13 @@ def solve(num_states, states_difficulties, avg_error_rate, policy, workers_error
     beliefs = [deepcopy(belief) for i in range(num_items)]
 
     answers = [CONST_NO_ANSWER for i in range(0, num_items)]
+    unresolved_items = get_unresolved_items(answers)
 
     iteration_number = 0
     while are_items_unresolved(answers):
         iteration_number += 1
 
         items_to_vote = []
-        unresolved_items = get_unresolved_items(answers)
-        unresolved_items_num = len(unresolved_items)
 
         for item_id in unresolved_items:
             beliefState = beliefs[item_id]
@@ -150,9 +319,10 @@ def solve(num_states, states_difficulties, avg_error_rate, policy, workers_error
                     answers[item_id] = 0
                 else:
                     answers[item_id] = 1
-
         # end for
 
+        unresolved_items = get_unresolved_items(answers)
+        unresolved_items_num = len(unresolved_items)
         have_submitted = unresolved_items_num != num_items
 
         for item_to_vote in items_to_vote:
@@ -160,7 +330,7 @@ def solve(num_states, states_difficulties, avg_error_rate, policy, workers_error
                                               workers_error_rates)
             items_votes[item_to_vote][worker_id] = vote
 
-        estimated_error_rates = get_worker_error_rate_estimation(items_votes)
+        estimated_error_rates = get_worker_error_rate_estimation(items_votes, path_em_input_file)
 
         for item_id in items_to_vote:
             last_vote = list(items_votes[item_id].values())[-1]
@@ -169,7 +339,6 @@ def solve(num_states, states_difficulties, avg_error_rate, policy, workers_error
                                             get_worker_error_rate(last_worker_id, estimated_error_rates, avg_error_rate,
                                                                   estimate_after, have_submitted))
 
-        # print(f"Num to vote: {len(items_to_vote)}")
     # end while
 
     return answers, items_votes
@@ -185,7 +354,8 @@ def generate_worker_error_rates(workers_num, dist_name, dist_mean, dist_std):
 
 def run_base_case(items_num, positive_percentage, item_difficulty, workers_num, avg_workers_error_rate,
                   dist_name, dist_mean, dist_std, states_num, policy_path, output_file, moment_error_estimations,
-                  fncs, fpcs, get_policy_name_fn, columns_to_print):
+                  fncs, fpcs, get_policy_name_fn, columns_to_print, path_em_input_file='./log/em/ballots.eminput',
+                  iterations_num=10):
 
     columns = ['name', 'num_workers', 'workers_distribution', 'policy_name', 'num_items', 'data_bal', 'items_diff',
                'num_states', 'cost', 'cost_std', 'recall', 'recall_std', 'precision', 'precision_std', 'loss',
@@ -216,15 +386,16 @@ def run_base_case(items_num, positive_percentage, item_difficulty, workers_num, 
                 f_betas = []
                 wces = []
 
-                for _ in range(10):
-                    answers, items_votes = solve(states_num, state_diff, avg_workers_error_rate, policy, workers_error_rates,
-                                                 items_difficulties, items_ground_truth, moment_error_estimation)
+                for _ in range(iterations_num):
+                    answers, items_votes = solve(states_num, state_diff, avg_workers_error_rate, policy,
+                                                 workers_error_rates, items_difficulties, items_ground_truth,
+                                                 moment_error_estimation, path_em_input_file)
 
                     costs.append(np.mean([len(v) for k, v in items_votes.items()]))
 
                     loss, recall, precision, f1, beta, f_beta, wce = alg_utils.Metrics.compute_metrics(answers,
-                                                                                                       items_ground_truth,
-                                                                                                       -1 * fnc, -1 * fpc)
+                                                                                                   items_ground_truth,
+                                                                                                   -1 * fnc, -1 * fpc)
                     losses.append(loss)
                     recalls.append(recall)
                     precisions.append(precision)

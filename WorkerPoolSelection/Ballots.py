@@ -27,6 +27,7 @@ class Ballots:
 
 
     def writeToEMFormat(self):
+        os.chdir("/Users/pmaglione/Repos/adaptive-pomdp-solutions/WorkerPoolSelection")
         outputfile = open('log/em/ballots.eminput', 'w')
         outputfile.write('%d %d %d %d %d %f\n' % (self.numLabels, self.numWorkers, self.numQuestions, 1, self.numPools,
                                                   0.5))

@@ -37,7 +37,6 @@ def dot(v1, v2):
         sum += v1[i] * v2[i]
     return sum
 
-
 def generateBallot(gamma, d, answer):
     a = random()
     if a < calcAccuracy(gamma, d):
