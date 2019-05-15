@@ -7,11 +7,38 @@ from results_utils import *
 
 import python_glad.glad_bin as glad_bin
 
+
+#prints
+def print_vars(total_elems):
+    print(f"Num Workers: {total_elems.num_workers.unique()}")
+    print(f"Workers Distribution: {total_elems.workers_distribution.unique()}")
+    print(f"Workers Initial Error Rate: {total_elems.avg_error_rate.unique()}")
+    print(f"Num Items: {total_elems.num_items.unique()}")
+    print(f"Items Balance: {total_elems.data_bal.unique()}")
+    print(f"Items Difficulty: {total_elems.items_diff.unique()}")
+    print(f"Num states: {total_elems.num_states.unique()}")
+    print(f"Error Estimations: {total_elems.estimate_after.unique()}")
+    print(f"False Negative Costs: {total_elems.fnc.unique()}")
+    print(f"False Positive Costs: {total_elems.fpc.unique()}")
+
+def print_vars_base(total_elems):
+    print(f"Num Workers: {total_elems.num_workers.unique()}")
+    print(f"Workers Distribution: {total_elems.workers_distribution.unique()}")
+    print(f"Workers Initial Error Rate: {total_elems.avg_error_rate.unique()}")
+    print(f"Num Items: {total_elems.num_items.unique()}")
+    print(f"Items Balance: {total_elems.data_bal.unique()}")
+    print(f"Items Difficulty: {total_elems.items_diff.unique()}")
+    print(f"Num states: {total_elems.num_states.unique()}")
+    print(f"Error Estimations: {total_elems.estimate_after.unique()}")
+    print(f"False Negative Costs == False Positive Costs: {total_elems.wrong_cost.unique()}")
+
+
 # ACTIONS
 CONST_NO_ANSWER = -1
 CONST_REQUEST_VOTE = 0
 CONST_SUBMIT_ZERO = 1
 CONST_SUBMIT_ONE = 2
+CONST_UNCLASSIFIED = 3
 
 # policy and beliefs management
 def dot(v1, v2):
@@ -265,6 +292,40 @@ def readPolicy(policyfile, numStates):
     except:
         raise FileNotFoundError
 
+
+def get_worker_vote_confusion(item_id, items_votes, items_difficulties, items_gt, workers_error_rates):
+    selected_worker_id = get_random_worker_id(workers_error_rates, item_id, items_votes)
+
+    if items_gt[item_id] == 0:
+        worker_acc = get_accuracy(items_difficulties[item_id], workers_error_rates[0][selected_worker_id])
+    else:
+        worker_acc = get_accuracy(items_difficulties[item_id], workers_error_rates[1][selected_worker_id])
+
+    if np.random.binomial(1, worker_acc):
+        return selected_worker_id, items_gt[item_id]
+    else:
+        return selected_worker_id, 1 - items_gt[item_id]
+
+
+def get_random_worker_id(workers_error_rates, item_id, votes):
+    item_votes = votes[item_id].copy()
+    worker_ids_used = item_votes.keys()
+    workers_ids_range = [k for k, v in enumerate(workers_error_rates[0])]
+    workers_ids_unused = [val for val in workers_ids_range if val not in worker_ids_used]
+
+    if (len(workers_ids_unused) == 0):
+        used = len(worker_ids_used)
+        ranges = len(workers_ids_range)
+        unu = len(workers_ids_unused)
+        print(f'used: {used}')
+        print(f'workers: {ranges}')
+        print(f'unused: {unu}')
+        raise ValueError("Unused empty!?")
+
+    selected_worker_id = np.random.choice(workers_ids_unused)
+
+    return selected_worker_id
+
 # data utils
 '''
     items_num - number of items
@@ -328,6 +389,144 @@ def solve(num_states, states_difficulties, avg_error_rate, policy, workers_error
         for item_to_vote in items_to_vote:
             worker_id, vote = get_worker_vote(item_to_vote, items_votes, items_difficulties, items_gt,
                                               workers_error_rates)
+            items_votes[item_to_vote][worker_id] = vote
+
+        estimated_error_rates = get_worker_error_rate_estimation(items_votes, path_em_input_file)
+
+        for item_id in items_to_vote:
+            last_vote = list(items_votes[item_id].values())[-1]
+            last_worker_id = list(items_votes[item_id])[-1]
+            beliefs[item_id] = updateBelief(beliefs[item_id], last_vote, states_difficulties,
+                                            get_worker_error_rate(last_worker_id, estimated_error_rates, avg_error_rate,
+                                                                  estimate_after, have_submitted))
+
+    # end while
+
+    return answers, items_votes
+
+
+def solve_unclassify(num_states, states_difficulties, avg_error_rate, policy, workers_error_rates, items_difficulties,
+                     items_gt, estimate_after=True, path_em_input_file='./log/em/ballots.eminput', expert_cost=20):
+    num_items = len(items_gt)
+
+    actions = range(0, 4)  # 0,1,2,3
+    # states_difficulties = getDifficulties(0.1)
+
+    items_votes = {}
+    for item_id in range(num_items):
+        items_votes[item_id] = {}
+
+    # init beliefs
+    belief = [1 for i in range(num_states)]
+    belief[num_states - 1] = 0  # last states = 0, terminating state
+    belief = normalize(belief)
+    beliefs = [deepcopy(belief) for i in range(num_items)]
+
+    answers = [CONST_NO_ANSWER for i in range(0, num_items)]
+
+    unresolved_items = get_unresolved_items(answers)
+
+    items_unclassified = 0
+
+    iteration_number = 0
+    while are_items_unresolved(answers):
+        iteration_number += 1
+
+        items_to_vote = []
+
+        for item_id in unresolved_items:
+            beliefState = beliefs[item_id]
+            bestAction = findBestAction(actions, policy, beliefState)
+            bestAction = int(bestAction)
+
+            if bestAction == CONST_REQUEST_VOTE:
+                items_to_vote.append(item_id)
+            elif bestAction == CONST_SUBMIT_ZERO or bestAction == CONST_SUBMIT_ONE or bestAction == CONST_UNCLASSIFIED:
+
+                if bestAction == CONST_UNCLASSIFIED:
+                    items_unclassified += 1
+
+                    answers[item_id] = items_gt[item_id]
+                elif bestAction == CONST_SUBMIT_ZERO:
+                    answers[item_id] = 0
+                else:
+                    answers[item_id] = 1
+
+        # end for
+
+        unresolved_items = get_unresolved_items(answers)
+        unresolved_items_num = len(unresolved_items)
+        have_submitted = unresolved_items_num != num_items
+
+        for item_to_vote in items_to_vote:
+            worker_id, vote = get_worker_vote(item_to_vote, items_votes, items_difficulties, items_gt,
+                                              workers_error_rates)
+            items_votes[item_to_vote][worker_id] = vote
+
+        estimated_error_rates = get_worker_error_rate_estimation(items_votes, path_em_input_file)
+
+        for item_id in items_to_vote:
+            last_vote = list(items_votes[item_id].values())[-1]
+            last_worker_id = list(items_votes[item_id])[-1]
+            beliefs[item_id] = updateBelief(beliefs[item_id], last_vote, states_difficulties,
+                                            get_worker_error_rate(last_worker_id, estimated_error_rates, avg_error_rate,
+                                                                  estimate_after, have_submitted))
+
+        # print(f"Num to vote: {len(items_to_vote)}")
+    # end while
+
+    return answers, items_votes, items_unclassified
+
+
+def solve_confusion(num_states, states_difficulties, avg_error_rate, policy, workers_error_rates, items_difficulties,
+                    items_gt, estimate_after=True, path_em_input_file='./log/em/ballots.eminput'):
+    num_items = len(items_gt)
+
+    actions = range(0, 3)  # 0,1,2
+    # states_difficulties = getDifficulties(0.1)
+
+    items_votes = {}
+    for item_id in range(num_items):
+        items_votes[item_id] = {}
+
+    # init beliefs
+    belief = [1 for i in range(num_states)]
+    belief[num_states - 1] = 0  # last states = 0, terminating state
+    belief = normalize(belief)
+    beliefs = [deepcopy(belief) for i in range(num_items)]
+
+    answers = [CONST_NO_ANSWER for i in range(0, num_items)]
+
+    unresolved_items = get_unresolved_items(answers)
+
+    iteration_number = 0
+    while are_items_unresolved(answers):
+        iteration_number += 1
+
+        items_to_vote = []
+
+        for item_id in unresolved_items:
+            beliefState = beliefs[item_id]
+            bestAction = findBestAction(actions, policy, beliefState)
+            bestAction = int(bestAction)
+
+            if bestAction == CONST_REQUEST_VOTE:
+                items_to_vote.append(item_id)
+            elif bestAction == CONST_SUBMIT_ZERO or bestAction == CONST_SUBMIT_ONE:
+                if bestAction == CONST_SUBMIT_ZERO:
+                    answers[item_id] = 0
+                else:
+                    answers[item_id] = 1
+
+        # end for
+
+        unresolved_items = get_unresolved_items(answers)
+        unresolved_items_num = len(unresolved_items)
+        have_submitted = unresolved_items_num != num_items
+
+        for item_to_vote in items_to_vote:
+            worker_id, vote = get_worker_vote_confusion(item_to_vote, items_votes, items_difficulties, items_gt,
+                                                        workers_error_rates)
             items_votes[item_to_vote][worker_id] = vote
 
         estimated_error_rates = get_worker_error_rate_estimation(items_votes, path_em_input_file)
@@ -446,7 +645,8 @@ def run_base_case(items_num, positive_percentage, item_difficulty, workers_num, 
 
 def run_vary_num_states(items_num, positive_percentage, item_difficulty, workers_num, avg_workers_error_rate,
                   dist_name, dist_mean, dist_std, states_nums, states_diffs, policy_path, output_file,
-                moment_error_estimations, fncs, fpcs, get_policy_name_fn, columns_to_print):
+                moment_error_estimations, fncs, fpcs, get_policy_name_fn, columns_to_print,
+                path_em_input_file='./log/em/ballots.eminput', iterations_num=10):
 
     columns = ['name', 'num_workers', 'workers_distribution', 'policy_name', 'num_items', 'data_bal', 'items_diff',
                'num_states', 'cost', 'cost_std', 'recall', 'recall_std', 'precision', 'precision_std', 'loss',
@@ -478,10 +678,10 @@ def run_vary_num_states(items_num, positive_percentage, item_difficulty, workers
                     f_betas = []
                     wces = []
 
-                    for _ in range(10):
+                    for _ in range(iterations_num):
                         answers, items_votes = solve(states_num, state_diff, avg_workers_error_rate, policy,
                                                      workers_error_rates, items_difficulties, items_ground_truth,
-                                                     moment_error_estimation)
+                                                     moment_error_estimation, path_em_input_file)
 
                         costs.append(np.mean([len(v) for k, v in items_votes.items()]))
 
@@ -555,25 +755,207 @@ def run_vary_num_states(items_num, positive_percentage, item_difficulty, workers
         plot_elems_lines(values, fncs, columns_to_print, "FNC", labels)
 
 
-def print_vars(total_elems):
-    print(f"Num Workers: {total_elems.num_workers.unique()}")
-    print(f"Workers Distribution: {total_elems.workers_distribution.unique()}")
-    print(f"Workers Initial Error Rate: {total_elems.avg_error_rate.unique()}")
-    print(f"Num Items: {total_elems.num_items.unique()}")
-    print(f"Items Balance: {total_elems.data_bal.unique()}")
-    print(f"Items Difficulty: {total_elems.items_diff.unique()}")
-    print(f"Num states: {total_elems.num_states.unique()}")
-    print(f"Error Estimations: {total_elems.estimate_after.unique()}")
-    print(f"False Negative Costs: {total_elems.fnc.unique()}")
-    print(f"False Positive Costs: {total_elems.fpc.unique()}")
+def run_unclassify_action(items_num, positive_percentage, item_difficulty, workers_num, avg_workers_error_rate,
+                  dist_name, dist_mean, dist_std, states_num, policy_path, output_file,
+                moment_error_estimations, fncs, fpcs, ucs, get_policy_name_fn, columns_to_print,
+                path_em_input_file='./log/em/ballots.eminput', iterations_num=10):
 
-def print_vars_base(total_elems):
-    print(f"Num Workers: {total_elems.num_workers.unique()}")
-    print(f"Workers Distribution: {total_elems.workers_distribution.unique()}")
-    print(f"Workers Initial Error Rate: {total_elems.avg_error_rate.unique()}")
-    print(f"Num Items: {total_elems.num_items.unique()}")
-    print(f"Items Balance: {total_elems.data_bal.unique()}")
-    print(f"Items Difficulty: {total_elems.items_diff.unique()}")
-    print(f"Num states: {total_elems.num_states.unique()}")
-    print(f"Error Estimations: {total_elems.estimate_after.unique()}")
-    print(f"False Negative Costs == False Positive Costs: {total_elems.wrong_cost.unique()}")
+    columns = ['name', 'num_workers', 'workers_distribution', 'policy_name', 'num_items', 'data_bal', 'items_diff',
+               'num_states', 'cost', 'cost_std', 'recall', 'recall_std', 'precision', 'precision_std', 'loss',
+               'loss_std', 'f1', 'f1_std', 'fbeta', 'fbeta_std', 'estimate_after', 'avg_error_rate',
+               'wce', 'wce_std', 'fnc', 'fpc', 'ucc', 'uc','uc_std']
+
+    items_difficulties = [item_difficulty] * items_num
+    items_ground_truth = generate_gold_data(items_num, positive_percentage)
+    workers_error_rates = generate_worker_error_rates(workers_num, dist_name, dist_mean, dist_std)
+
+    state_diff = getDifficulties(0.1)
+
+    header = True
+
+    for moment_error_estimation in moment_error_estimations:
+        for fnc in fncs:
+            for fpc in fpcs:
+
+                ucc = min(abs(fnc), abs(fpc)) / 2
+
+                expert_cost = max(abs(fnc), abs(fpc))
+
+                total_results = []
+
+                policy_name = get_policy_name_fn(fnc, fpc, ucc)
+                policy = readPolicy(policy_path + policy_name, states_num)
+
+                losses = []
+                recalls = []
+                precisions = []
+                costs = []
+                f_ones = []
+                f_betas = []
+                wces = []
+                items_unclassified_num = []
+
+                for _ in range(iterations_num):
+                    answers, items_votes, items_unclassified = solve_unclassify(states_num, state_diff, avg_workers_error_rate, policy,
+                                                 workers_error_rates, items_difficulties, items_ground_truth,
+                                                 moment_error_estimation, path_em_input_file)
+
+                    cost_crowd_votes = np.mean([len(v) for k, v in items_votes.items()])
+                    cost_unclassified = items_unclassified * ucc
+                    items_unclassified_num.append(items_unclassified)
+
+                    costs.append(cost_crowd_votes + cost_unclassified)
+
+                    loss, recall, precision, f1, beta, f_beta, wce = alg_utils.Metrics.compute_metrics(answers,
+                                                                                               items_ground_truth,
+                                                                                               -1 * fnc,
+                                                                                               -1 * fpc)
+                    losses.append(loss)
+                    recalls.append(recall)
+                    precisions.append(precision)
+                    f_ones.append(f1)
+                    f_betas.append(f_beta)
+                    wces.append(wce)
+                    # end for iterations
+
+                result = [f"unclassify-fnc{fnc}-fpc{fpc}-uc{ucc}", workers_num, dist_name + f"({dist_mean},{dist_std})",
+                          policy_name, items_num, positive_percentage,
+                          item_difficulty, states_num, round_to_3(np.mean(costs)), round_to_3(np.std(costs)),
+                          round_to_3(np.mean(recalls)), round_to_3(np.std(recalls)),
+                          round_to_3(np.mean(precisions)), round_to_3(np.std(precisions)),
+                          round_to_3(np.mean(losses)),
+                          round_to_3(np.std(losses)),
+                          round_to_3(np.mean(f_ones)), round_to_3(np.std(f_ones)), round_to_3(np.mean(f_betas)),
+                          round_to_3(np.std(f_betas)), moment_error_estimation, avg_workers_error_rate,
+                          round_to_3(np.mean(wces)), round_to_3(np.std(wces)), fnc, fpc, ucc,
+                          round_to_3(np.mean(items_unclassified_num)), round_to_3(np.std(items_unclassified_num))]
+
+                total_results.append(result)
+
+                #  create or append
+                df = pd.DataFrame(total_results, columns=columns)
+                mode = 'w' if header else 'a'
+                df.to_csv(output_file, mode=mode, index=False, header=header)
+                header = False
+    # end for
+
+    data = pd.read_csv(output_file)
+
+    elems_all = data[data.name.str.startswith('unclassify-')]
+
+    fncs = elems_all.fnc.unique()
+
+    ucs = [abs(x) / 2 for x in fncs]
+    for uc in ucs:
+        print("\n")
+        print(f"UCC: {uc}")
+        elems = []
+        labels = []
+
+        for fnc in fncs:
+            elems_unc = data[data.name.str.startswith('unclassify-')]
+            unc_t = elems_unc[elems_unc.estimate_after == True][elems_unc.fpc == fnc]
+            unc_f = elems_unc[elems_unc.estimate_after == False][elems_unc.fpc == fnc]
+            elems.append(unc_t)
+            elems.append(unc_f)
+
+            labels.append(f"After, FPN={fnc}, UC={uc}")
+            labels.append(f"Before, FPN={fnc}, UC={uc}")
+
+        plot_elems_lines(elems, fncs, columns_to_print, "FNC", labels)
+
+
+def run_confusion(items_num, positive_percentage, item_difficulty, workers_num, avg_workers_error_rate,
+                  dist_name, dist_mean, dist_std, states_num, policy_path, output_file, moment_error_estimations,
+                  fncs, fpcs, get_policy_name_fn, columns_to_print, path_em_input_file='./log/em/ballots.eminput',
+                  iterations_num=10):
+
+    columns = ['name', 'num_workers', 'workers_distribution', 'policy_name', 'num_items', 'data_bal', 'items_diff',
+               'num_states', 'cost', 'cost_std', 'recall', 'recall_std', 'precision', 'precision_std', 'loss',
+               'loss_std', 'f1', 'f1_std', 'fbeta', 'fbeta_std', 'estimate_after', 'avg_error_rate',
+               'wce', 'wce_std', 'fnc', 'fpc']
+
+    items_difficulties = [item_difficulty] * items_num
+    items_ground_truth = generate_gold_data(items_num, positive_percentage)
+    workers_error_rates = []
+    acc_pos = np.random.normal(dist_mean, dist_std, workers_num)
+    workers_error_rates.append([w_acc_pos * .5 for w_acc_pos in acc_pos])  # 10% higher than positive
+    workers_error_rates.append(acc_pos)  # possitive error rate ±75
+
+    state_diff = getDifficulties(0.1)
+
+    header = True
+
+    for moment_error_estimation in moment_error_estimations:
+        for fnc in fncs:
+            for fpc in fpcs:
+                total_results = []
+
+                policy_name = get_policy_name_fn(items_num, fnc, fpc)
+                policy = readPolicy(policy_path + policy_name, states_num)
+
+                losses = []
+                recalls = []
+                precisions = []
+                costs = []
+                f_ones = []
+                f_betas = []
+                wces = []
+
+                for _ in range(iterations_num):
+                    answers, items_votes = solve_confusion(states_num, state_diff, avg_workers_error_rate, policy,
+                                                 workers_error_rates, items_difficulties, items_ground_truth,
+                                                 moment_error_estimation, path_em_input_file)
+
+                    costs.append(np.mean([len(v) for k, v in items_votes.items()]))
+
+                    loss, recall, precision, f1, beta, f_beta, wce = alg_utils.Metrics.compute_metrics(answers,
+                                                                                                   items_ground_truth,
+                                                                                                   -1 * fnc, -1 * fpc)
+                    losses.append(loss)
+                    recalls.append(recall)
+                    precisions.append(precision)
+                    f_ones.append(f1)
+                    f_betas.append(f_beta)
+                    wces.append(wce)
+                    # end for iterations
+
+                result = [f"confusion-fnc{fnc}-fpc{fpc}", workers_num, dist_name + f"({dist_mean},{dist_std})",
+                          policy_name, items_num, positive_percentage,
+                          item_difficulty, states_num, round_to_3(np.mean(costs)), round_to_3(np.std(costs)),
+                          round_to_3(np.mean(recalls)), round_to_3(np.std(recalls)),
+                          round_to_3(np.mean(precisions)), round_to_3(np.std(precisions)), round_to_3(np.mean(losses)),
+                          round_to_3(np.std(losses)),
+                          round_to_3(np.mean(f_ones)), round_to_3(np.std(f_ones)), round_to_3(np.mean(f_betas)),
+                          round_to_3(np.std(f_betas)), moment_error_estimation, avg_workers_error_rate,
+                          round_to_3(np.mean(wces)), round_to_3(np.std(wces)), fnc, fpc]
+
+                total_results.append(result)
+
+                #  create or append
+                df = pd.DataFrame(total_results, columns=columns)
+                mode = 'w' if header else 'a'
+                df.to_csv(output_file, mode=mode, index=False, header=header)
+                header = False
+
+        # end for fncs
+    #end for moments
+
+    data = pd.read_csv(output_file)
+    data = data[data.name.str.startswith('confusion-')]
+
+    elems_t = data[data.estimate_after == True]
+    elems_f = data[data.estimate_after == False]
+
+    elems = []
+    labels = []
+    for fnc in fncs:
+        elems_t_filtered = elems_t[elems_t.fpc == fnc]
+        elems_f_filtered = elems_f[elems_f.fpc == fnc]
+
+        elems.append(elems_t_filtered)
+        elems.append(elems_f_filtered)
+        labels.append(f"After, FPN={fnc}")
+        labels.append(f"Before, FPN={fnc}")
+
+    plot_elems_lines(elems, fncs, columns_to_print, "FNC", labels)

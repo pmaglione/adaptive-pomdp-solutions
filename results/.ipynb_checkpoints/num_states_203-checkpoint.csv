@@ -1,0 +1,8 @@
+name,num_workers,workers_distribution,policy_name,num_items,data_bal,items_diff,num_states,cost,cost_std,recall,recall_std,precision,precision_std,loss,loss_std,f1,f1_std,fbeta,fbeta_std,estimate_after,avg_error_rate,wce,wce_std,fnc,fpc
+diff-states-fnc-1-fpc-1,100,"Normal(1,0.2)",vc-203states-fnc-1-fpc-1.policy,1000,0.5,0.5,203,0.0,0.0,0.0,0.0,0.0,0.0,0.5,0.0,0.0,0.0,0.0,0.0,False,1,0.5,0.0,-1,-1
+diff-states-fnc-1-fpc-5,100,"Normal(1,0.2)",vc-203states-fnc-1-fpc-5.policy,1000,0.5,0.5,203,0.0,0.0,0.0,0.0,0.0,0.0,0.5,0.0,0.0,0.0,0.0,0.0,False,1,0.5,0.0,-1,-5
+diff-states-fnc-1-fpc-10,100,"Normal(1,0.2)",vc-203states-fnc-1-fpc-10.policy,1000,0.5,0.5,203,0.0,0.0,0.0,0.0,0.0,0.0,0.5,0.0,0.0,0.0,0.0,0.0,False,1,0.5,0.0,-1,-10
+diff-states-fnc-1-fpc-500,100,"Normal(1,0.2)",vc-203states-fnc-1-fpc-500.policy,1000,0.5,0.5,203,0.0,0.0,0.0,0.0,0.0,0.0,0.5,0.0,0.0,0.0,0.0,0.0,False,1,0.5,0.0,-1,-500
+diff-states-fnc-5-fpc-1,100,"Normal(1,0.2)",vc-203states-fnc-5-fpc-1.policy,1000,0.5,0.5,203,0.0,0.0,1.0,0.0,0.5,0.0,0.5,0.0,0.667,0.0,0.963,0.0,False,1,0.5,0.0,-5,-1
+diff-states-fnc-5-fpc-5,100,"Normal(1,0.2)",vc-203states-fnc-5-fpc-5.policy,1000,0.5,0.5,203,1.0,0.0,0.0,0.0,0.0,0.0,2.5,0.0,0.0,0.0,0.0,0.0,False,1,2.5,0.0,-5,-5
+diff-states-fnc-5-fpc-10,100,"Normal(1,0.2)",vc-203states-fnc-5-fpc-10.policy,1000,0.5,0.5,203,0.0,0.0,0.0,0.0,0.0,0.0,2.5,0.0,0.0,0.0,0.0,0.0,False,1,2.5,0.0,-5,-10

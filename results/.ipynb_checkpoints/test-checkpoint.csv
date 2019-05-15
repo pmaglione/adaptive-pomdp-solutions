@@ -1,9 +1,0 @@
-name,num_workers,workers_distribution,policy_name,num_items,data_bal,items_diff,num_states,cost,cost_std,recall,recall_std,precision,precision_std,loss,loss_std,f1,f1_std,fbeta,fbeta_std,estimate_after,avg_error_rate,wce,wce_std,fnc,fpc
-base-fnc-1-fpc-1,100,"Normal(1,0.2)",wrong-cost-fnc-1-fpc-1.policy,1000,0.5,0.5,23,0.0,0.0,0.0,0.0,0.0,0.0,0.5,0.0,0.0,0.0,0.0,0.0,False,1,0.5,0.0,-1,-1
-base-fnc-1-fpc-5,100,"Normal(1,0.2)",wrong-cost-fnc-1-fpc-5.policy,1000,0.5,0.5,23,0.0,0.0,0.0,0.0,0.0,0.0,0.5,0.0,0.0,0.0,0.0,0.0,False,1,0.5,0.0,-1,-5
-base-fnc-5-fpc-1,100,"Normal(1,0.2)",wrong-cost-fnc-5-fpc-1.policy,1000,0.5,0.5,23,0.0,0.0,1.0,0.0,0.5,0.0,0.5,0.0,0.667,0.0,0.963,0.0,False,1,0.5,0.0,-5,-1
-base-fnc-5-fpc-5,100,"Normal(1,0.2)",wrong-cost-fnc-5-fpc-5.policy,1000,0.5,0.5,23,1.0,0.0,0.747,0.016,0.747,0.011,0.759,0.039,0.747,0.011,0.747,0.015,False,1,1.265,0.051,-5,-5
-base-fnc-1-fpc-1,100,"Normal(1,0.2)",wrong-cost-fnc-1-fpc-1.policy,1000,0.5,0.5,23,0.0,0.0,0.0,0.0,0.0,0.0,0.5,0.0,0.0,0.0,0.0,0.0,True,1,0.5,0.0,-1,-1
-base-fnc-1-fpc-5,100,"Normal(1,0.2)",wrong-cost-fnc-1-fpc-5.policy,1000,0.5,0.5,23,0.0,0.0,0.0,0.0,0.0,0.0,0.5,0.0,0.0,0.0,0.0,0.0,True,1,0.5,0.0,-1,-5
-base-fnc-5-fpc-1,100,"Normal(1,0.2)",wrong-cost-fnc-5-fpc-1.policy,1000,0.5,0.5,23,0.0,0.0,1.0,0.0,0.5,0.0,0.5,0.0,0.667,0.0,0.963,0.0,True,1,0.5,0.0,-5,-1
-base-fnc-5-fpc-5,100,"Normal(1,0.2)",wrong-cost-fnc-5-fpc-5.policy,1000,0.5,0.5,23,1.0,0.0,0.752,0.024,0.744,0.017,0.748,0.064,0.748,0.019,0.752,0.023,True,1,1.265,0.09,-5,-5
